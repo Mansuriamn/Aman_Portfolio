@@ -30,7 +30,7 @@ const [data, setData] = useState({
       .then(res => {
         navi('/');
       })
-      .catch(err => console.log('error', err));
+      ;
   }
 
 

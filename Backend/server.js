@@ -2,30 +2,32 @@ const express = require('express');
 const mysql = require('mysql');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-
+const path = require('path');
 const app = express();
 
+require('dotenv').config(); // Load environment variables
+
 app.use(express.json());
-app.use(bodyParser.urlencoded({
-    extended: true
-}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
-// Database connection
+const _dirname = path.resolve();
+
+// Database connection using environment variables
 const db = mysql.createConnection({
-    host: 'localhost',  // Replace with your host
-    user: 'root',       // Replace with your MySQL username
-    password: 'root',       // Replace with your MySQL password
-    database: 'portfolio' // Replace with your database name
+    host: process.env.DB_HOST,   // Use environment variable
+    user: process.env.DB_USER,   // Use environment variable
+    password: process.env.DB_PASSWORD, // Use environment variable
+    database: process.env.DB_NAME // Use environment variable
 });
 
 // Connect to the database
 db.connect((err) => {
     if (err) {
-        console.log('Error connecting to database', err);
+        console.error('Database connection failed:', err.stack);
         return;
     }
-    console.log('Database connected!');
+    console.log('Connected to the database');
 });
 
 app.post('/contact', (req, res) => {
@@ -40,17 +42,21 @@ app.post('/contact', (req, res) => {
     // Execute the query
     db.query(query, values, (err, result) => {
         if (err) {
-            console.log('Error while inserting data', err);
             res.status(500).send('Failed to insert data.');
         } else {
-            console.log('Data inserted successfully!');
             res.status(200).send('Data inserted successfully!');
         }
     });
 });
-const port=process.env.PORT || 3000 ;
 
-// Start the server
+app.use(express.static(path.join(_dirname, "/Frontend/dist")));
+app.get('*', (req, res) => {
+    res.sendFile(path.resolve(_dirname, "Frontend", "dist", "index.html"));
+});
+
+// Use the environment variable for the port
+const port = process.env.PORT || 3000;
+
 app.listen(port, () => {
-    console.log('Server running on http://localhost:3000');
+    console.log(`Server running on port ${port}`);
 });
